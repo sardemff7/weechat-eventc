@@ -29,44 +29,105 @@ namespace Eventd
         namespace Callback
         {
             private static int
-            event(string signal_name, string type_data, void *signal_data)
+            print(Weechat.Buffer? buffer, time_t date, string*[] tags, bool displayed, bool highlight, string prefix, string message)
             {
                 if ( ! eventc.is_connected() )
                     return Weechat.Rc.ERROR;
 
+                if ( ( ! displayed ) || ( buffer == null ) || ( buffer.get_string("plugin") != "irc" ) )
+                    return Weechat.Rc.OK;
+
                 Eventd.Event event = null;
-                switch ( signal_name )
+                unowned string channel = null;
+                string nick = null;
+                string msg = null;
+
+                unowned string name = null;
+                switch ( buffer.get_string("localvar_type") )
                 {
-                case "weechat_highlight":
-                    event = new Eventd.Event("highlight");
-                    var data = ((string)signal_data).split("\t", 2);
-                    if ( data[0] == "--" )
-                    {
-                        data = data[1].split(":", 2);
-                        event.add_data("nick", data[0]);
-                        event.add_data("message", data[1]);
-                    }
-                    else
-                    {
-                        event.add_data("nick", data[0]);
-                        event.add_data("message", data[1]);
-                    }
+                case "channel":
+                    channel = buffer.get_string("localvar_channel");
+                break;
+                case "private":
                 break;
                 }
-                if ( event != null )
+
+                foreach ( string tag in tags )
                 {
-                    eventc.event.begin(event, (obj, res) => {
-                        try
+                    if ( tag.has_prefix("log") )
+                        continue;
+                    if ( tag.has_prefix("no_") )
+                        continue;
+                    if ( tag == "away_info" )
+                        return Weechat.Rc.OK;
+
+                    var stag = tag.split("_", 2);
+                    switch ( stag[0] )
+                    {
+                    case "irc":
+                        switch ( stag[1] )
                         {
-                            eventc.event.end(res);
+                        case "privmsg":
+                            if ( highlight )
+                                name = "highlight";
+                            else if ( channel != null )
+                                name = "chat-msg";
+                            else
+                                name = "im-msg";
+                        break;
+                        case "notice":
+                            name = "notice";
+                        break;
+                        case "action":
+                            if ( highlight )
+                                name = "highligh-message";
+                            else
+                                name = "action";
+                        break;
+                        case "join":
+                            name = "join";
+                        break;
+                        case "leave":
+                            name = "leave";
+                        break;
+                        case "quit":
+                            name = "quit";
+                        break;
                         }
-                        catch ( Eventc.EventcError e )
+                    break;
+                    case "nick":
+                        nick = (owned)stag[1];
+                    break;
+                    case "notify":
+                        switch ( stag[1] )
                         {
-                            Weechat.printf(null, "eventc: Error sending event: %s", e.message);
-                            connect();
+                        case "none":
+                            return Weechat.Rc.OK;
                         }
-                    });
+                    break;
+                    }
                 }
+                if ( name == null )
+                    return Weechat.Rc.OK;
+
+                event = new Eventd.Event(name);
+                if ( nick != null )
+                    event.add_data("nick", (owned)nick);
+                if ( channel != null )
+                    event.add_data("channel", channel);
+                event.add_data("message", ( msg != null ) ? msg : message);
+
+                eventc.event.begin(event, (obj, res) => {
+                    try
+                    {
+                        eventc.event.end(res);
+                    }
+                    catch ( Eventc.EventcError e )
+                    {
+                        Weechat.printf(null, "eventc: Error sending event: %s", e.message);
+                        connect();
+                    }
+                });
                 return  Weechat.Rc.OK;
             }
 
@@ -222,7 +283,7 @@ namespace Eventd
                                  "connect | disconnect", "",
                                  "connect || disconnect || event",
                                  Callback.command);
-            Weechat.hook_signal("weechat_highlight", Callback.event);
+            Weechat.hook_print(null, null, null, false, Callback.print);
             Weechat.hook_config("plugins.var.eventc.server.*", Callback.server_info_changed);
             Weechat.hook_config("plugins.var.eventc.client.*", Callback.client_info_changed);
             Weechat.hook_config("plugins.var.eventc.connection.timeout", Callback.timeout_changed);
