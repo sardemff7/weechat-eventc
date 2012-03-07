@@ -107,7 +107,7 @@ namespace Eventd
             }
 
             private static int
-            command(Weechat.Gui.Buffer buffer, string[] args, string[] args_eol)
+            command(Weechat.Buffer? buffer, string[] args, string[] args_eol)
             {
                 if ( args.length < 2 )
                     return Weechat.Rc.ERROR;
