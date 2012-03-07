@@ -69,20 +69,26 @@ namespace Eventd
                         {
                         case "privmsg":
                             if ( highlight )
-                                name = "highlight";
+                                name = "highlight-msg";
                             else if ( channel != null )
                                 name = "chat-msg";
                             else
                                 name = "im-msg";
                         break;
                         case "notice":
-                            name = "notice";
+                            if ( highlight )
+                                name = "highligh-notice";
+                            else
+                                name = "notice";
                         break;
                         case "action":
                             if ( highlight )
-                                name = "highligh-message";
+                                name = "highligh-action";
                             else
                                 name = "action";
+                        break;
+                        case "notify":
+                            name = "notify";
                         break;
                         case "join":
                             name = "join";
