@@ -63,7 +63,8 @@ namespace Weechat
     {
     }
 
-    namespace Config
+    [CCode (cname = "struct t_config_file", ref_function = "", unref_function = "")]
+    public class Config
     {
         public enum OptionSet
         {
@@ -72,14 +73,85 @@ namespace Weechat
             OPTION_NOT_FOUND,
             ERROR
         }
-        public unowned string get_plugin(string name);
-        public unowned int set_plugin(string name, string new_value);
-        public unowned bool is_set_plugin(string name);
+
+        public enum Read
+        {
+            OK,
+            MEMORY_ERROR,
+            FILE_NOT_FOUND
+        }
+
+        public enum Write
+        {
+            OK,
+            ERROR,
+            MEMORY_ERROR
+        }
+
+        public static unowned string get_plugin(string name);
+        public static unowned int set_plugin(string name, string new_value);
+        public static unowned bool is_set_plugin(string name);
+
+        [CCode (instance_pos = 0.9)]
+        public delegate int ReloadCallback(Config file);
+
+        public Config(string name, [CCode (delegate_target_pos = 2.9)] ReloadCallback? callback_func = null);
+        public int read();
+
+        [CCode (cname = "struct t_config_section", ref_function = "", unref_function = "")]
+        public class Section
+        {
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int ReadCallback(Config file, Section section, string option_name, string @value);
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int WriteCallback(Config file, string section_name);
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int WriteDefaultCallback(Config file, string section_name);
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int CreateOptionCallback(Config file, Section section, string option_name, string @value);
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int DeleteOptionCallback(Config file, Section section, Option option);
+
+            [CCode (cname = "weechat_config_new_section")]
+            public Section(Config file, string name, bool user_can_add_options, bool user_can_delete_options, [CCode (delegate_target_pos = 5.9)] ReadCallback? read_callback = null, [CCode (delegate_target_pos = 7.9)] WriteCallback? write_callback = null, [CCode (delegate_target_pos = 9.9)] WriteDefaultCallback? write_default_callback = null, [CCode (delegate_target_pos = 11.9)] CreateOptionCallback? create_option_callback = null, [CCode (delegate_target_pos = 13.9)] DeleteOptionCallback? delete_option_callback = null);
+        }
+
+        [CCode (cname = "struct t_config_option", ref_function = "", unref_function = "")]
+        public class Option
+        {
+            [CCode (instance_pos = 0.9)]
+            public delegate int CheckValueCallback(Option option, string @value);
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int ChangeCallback(Option option);
+
+            [CCode (instance_pos = 0.9)]
+            public delegate int DeleteCallback(Option option);
+
+            [CCode (cname = "weechat_config_new_option")]
+            public Option(Config file, Section section, string name, string type, string description, string? string_values, int min, int max, string default_value, string? @value, bool null_value_allowed, [CCode (delegate_target_pos = 12.9)] CheckValueCallback? check_value_callback = null, [CCode (delegate_target_pos = 14.9)] ChangeCallback? change_callback = null, [CCode (delegate_target_pos = 16.9)] DeleteCallback? delete_callback = null);
+
+            [CCode (cname = "weechat_config_integer")]
+            public int integer();
+            [CCode (cname = "weechat_config_boolean")]
+            public bool boolean();
+            [CCode (cname = "weechat_config_string")]
+            public unowned string @string();
+            [CCode (cname = "weechat_config_color")]
+            public unowned string color();
+        }
     }
 
     [CCode (cname = "struct t_gui_buffer", ref_function = "", unref_function = "")]
     public class Buffer
     {
         public unowned string get_string(string property);
+        public int get_integer(string property);
+        public void @set(string property, string @value);
     }
 }
