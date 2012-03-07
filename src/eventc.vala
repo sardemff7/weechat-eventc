@@ -66,35 +66,62 @@ namespace Eventd
                         switch ( stag[1] )
                         {
                         case "privmsg":
-                            if ( highlight )
+                            if ( highlight && Config.Events.do_highlight() )
+                            {
                                 name = "highlight-msg";
-                            else if ( channel != null )
+                                continue;
+                            }
+                            if ( channel != null )
+                            {
+                                if ( Config.Events.no_chat_msg() )
+                                    return Weechat.Rc.OK;
                                 name = "chat-msg";
+                            }
                             else
+                            {
+                                if ( Config.Events.no_im_msg() )
+                                    return Weechat.Rc.OK;
                                 name = "im-msg";
+                            }
                         break;
                         case "notice":
-                            if ( highlight )
+                            if ( highlight && Config.Events.do_highlight() )
+                            {
                                 name = "highligh-notice";
-                            else
-                                name = "notice";
+                                continue;
+                            }
+                            if ( Config.Events.no_notice() )
+                                return Weechat.Rc.OK;
+                            name = "notice";
                         break;
                         case "action":
-                            if ( highlight )
+                            if ( highlight && Config.Events.do_highlight() )
+                            {
                                 name = "highligh-action";
-                            else
-                                name = "action";
+                                continue;
+                            }
+                            if ( Config.Events.no_action() )
+                                return Weechat.Rc.OK;
+                            name = "action";
                         break;
                         case "notify":
+                            if ( Config.Events.no_notify() )
+                                return Weechat.Rc.OK;
                             name = "notify";
                         break;
                         case "join":
+                            if ( Config.Events.no_join() )
+                                return Weechat.Rc.OK;
                             name = "join";
                         break;
                         case "leave":
+                            if ( Config.Events.no_leave() )
+                                return Weechat.Rc.OK;
                             name = "leave";
                         break;
                         case "quit":
+                            if ( Config.Events.no_quit() )
+                                return Weechat.Rc.OK;
                             name = "quit";
                         break;
                         }

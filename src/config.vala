@@ -28,6 +28,7 @@ namespace Eventd.WeechatPlugin.Config
     private static Weechat.Config.Section server;
     private static Weechat.Config.Section client;
     private static Weechat.Config.Section connection;
+    private static Weechat.Config.Section events;
 
     private static Weechat.Config.Option host;
     private static Weechat.Config.Option port;
@@ -47,6 +48,64 @@ namespace Eventd.WeechatPlugin.Config
     public uint16 get_retry_delay() { return (uint16)retry_delay.integer(); }
     public uint get_timeout() { return (uint)timeout.integer(); }
 
+    namespace Events
+    {
+        private static Weechat.Config.Option highlight;
+        private static Weechat.Config.Option chat_msg;
+        private static Weechat.Config.Option im_msg;
+        private static Weechat.Config.Option notice;
+        private static Weechat.Config.Option action;
+        private static Weechat.Config.Option notify;
+        private static Weechat.Config.Option join;
+        private static Weechat.Config.Option leave;
+        private static Weechat.Config.Option quit;
+
+        public bool do_highlight()
+        {
+            return highlight.boolean();
+        }
+
+        public bool no_chat_msg()
+        {
+            return ! chat_msg.boolean();
+        }
+
+        public bool no_im_msg()
+        {
+            return ! im_msg.boolean();
+        }
+
+        public bool no_notice()
+        {
+            return ! notice.boolean();
+        }
+
+        public bool no_action()
+        {
+            return ! action.boolean();
+        }
+
+        public bool no_notify()
+        {
+            return ! notify.boolean();
+        }
+
+        public bool no_join()
+        {
+            return ! join.boolean();
+        }
+
+        public bool no_leave()
+        {
+            return ! leave.boolean();
+        }
+
+        public bool no_quit()
+        {
+            return ! quit.boolean();
+        }
+    }
+
     public static void
     init()
     {
@@ -55,6 +114,7 @@ namespace Eventd.WeechatPlugin.Config
         server = new Weechat.Config.Section(file, "server", false, false);
         client = new Weechat.Config.Section(file, "client", false, false);
         connection = new Weechat.Config.Section(file, "connection", false, false);
+        events = new Weechat.Config.Section(file, "events", false, false);
 
         host = new Weechat.Config.Option(file, server, "host", "string", "", null, 0, 0, "localhost", null, false);
         port = new Weechat.Config.Option(file, server, "port", "integer", "", null, 0, 65535, "7100", null, false);
@@ -64,6 +124,16 @@ namespace Eventd.WeechatPlugin.Config
         max_tries = new Weechat.Config.Option(file, connection, "max-tries", "integer", "", null, -1, 100, "3", null, false);
         retry_delay = new Weechat.Config.Option(file, connection, "retry-delay", "integer", "", null, 0, 3600, "10", null, false);
         timeout = new Weechat.Config.Option(file, connection, "timeout", "integer", "", null, 0, 3600, "3", null, false);
+
+        Events.highlight = new Weechat.Config.Option(file, events, "highlight", "boolean", "", null, 0, 0, "on", null, false);
+        Events.chat_msg = new Weechat.Config.Option(file, events, "chat-msg", "boolean", "", null, 0, 0, "off", null, false);
+        Events.im_msg = new Weechat.Config.Option(file, events, "im-msg", "boolean", "", null, 0, 0, "on", null, false);
+        Events.notice = new Weechat.Config.Option(file, events, "notice", "boolean", "", null, 0, 0, "on", null, false);
+        Events.action = new Weechat.Config.Option(file, events, "action", "boolean", "", null, 0, 0, "off", null, false);
+        Events.notify = new Weechat.Config.Option(file, events, "notify", "boolean", "", null, 0, 0, "on", null, false);
+        Events.join = new Weechat.Config.Option(file, events, "join", "boolean", "", null, 0, 0, "off", null, false);
+        Events.leave = new Weechat.Config.Option(file, events, "leave", "boolean", "", null, 0, 0, "off", null, false);
+        Events.quit = new Weechat.Config.Option(file, events, "quit", "boolean", "", null, 0, 0, "off", null, false);
     }
 
     public static void
