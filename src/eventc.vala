@@ -265,7 +265,7 @@ namespace Eventd
                                  "connect | disconnect", "",
                                  "connect || disconnect || event",
                                  Callback.command);
-            Weechat.hook_print(null, null, null, false, Callback.print);
+            Weechat.hook_print(null, null, null, true, Callback.print);
             Weechat.hook_config("eventc.server.*", Callback.server_info_changed);
             Weechat.hook_config("eventc.client.*", Callback.client_info_changed);
             Weechat.hook_config("eventc.connection.timeout", Callback.timeout_changed);
