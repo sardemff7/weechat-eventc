@@ -26,13 +26,13 @@
 #include <gio/gio.h>
 #include <weechat-plugin.h>
 
+struct t_weechat_plugin *weechat_plugin = NULL;
+
 WEECHAT_PLUGIN_NAME("eventc");
 WEECHAT_PLUGIN_DESCRIPTION("Client for eventd");
 WEECHAT_PLUGIN_AUTHOR("Quentin Glidic <sardemff7+weechat@sardemff7.net>");
 WEECHAT_PLUGIN_VERSION("0.1");
 WEECHAT_PLUGIN_LICENSE("GPL3");
-
-extern struct t_weechat_plugin *weechat_plugin;
 
 void eventd_weechat_plugin_init(gchar *argv[], gint argc);
 void eventd_weechat_plugin_disconnect(GCallback callback);

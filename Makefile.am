@@ -3,8 +3,10 @@ ACLOCAL_AMFLAGS = -I m4
 CLEANFILES =
 
 AM_CFLAGS += \
+	-I $(top_srcdir)/include/ \
 	-I $(top_builddir)/include/ \
-	--include config.h
+	--include config.h \
+	--include define-weechat-plugin.h
 
 AM_VALAFLAGS += \
 	--vapidir $(top_srcdir)/vapi/ \
@@ -17,6 +19,7 @@ plugin_LTLIBRARIES = \
 
 
 eventc_la_VALASOURCES = \
+	src/config.vala \
 	src/eventc.vala
 
 eventc_la_SOURCES = \
