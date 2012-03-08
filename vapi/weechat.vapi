@@ -98,7 +98,7 @@ namespace Weechat
         public Config(string name, [CCode (delegate_target_pos = 2.9)] ReloadCallback? callback_func = null);
         public int read();
 
-        [CCode (cname = "struct t_config_section", ref_function = "", unref_function = "")]
+        [CCode (cname = "struct t_config_section", cprefix = "", ref_function = "", unref_function = "")]
         public class Section
         {
 
@@ -121,17 +121,17 @@ namespace Weechat
             public Section(Config file, string name, bool user_can_add_options, bool user_can_delete_options, [CCode (delegate_target_pos = 5.9)] ReadCallback? read_callback = null, [CCode (delegate_target_pos = 7.9)] WriteCallback? write_callback = null, [CCode (delegate_target_pos = 9.9)] WriteDefaultCallback? write_default_callback = null, [CCode (delegate_target_pos = 11.9)] CreateOptionCallback? create_option_callback = null, [CCode (delegate_target_pos = 13.9)] DeleteOptionCallback? delete_option_callback = null);
         }
 
-        [CCode (cname = "struct t_config_option", ref_function = "", unref_function = "")]
+        [CCode (cname = "struct t_config_option", cprefix = "", ref_function = "", unref_function = "")]
         public class Option
         {
             [CCode (instance_pos = 0.9)]
-            public delegate int CheckValueCallback(Option option, string @value);
+            public delegate bool CheckValueCallback(Option option, string @value);
 
             [CCode (instance_pos = 0.9)]
-            public delegate int ChangeCallback(Option option);
+            public delegate void ChangeCallback(Option option);
 
             [CCode (instance_pos = 0.9)]
-            public delegate int DeleteCallback(Option option);
+            public delegate void DeleteCallback(Option option);
 
             [CCode (cname = "weechat_config_new_option")]
             public Option(Config file, Section section, string name, string type, string description, string? string_values, int min, int max, string default_value, string? @value, bool null_value_allowed, [CCode (delegate_target_pos = 12.9)] CheckValueCallback? check_value_callback = null, [CCode (delegate_target_pos = 14.9)] ChangeCallback? change_callback = null, [CCode (delegate_target_pos = 16.9)] DeleteCallback? delete_callback = null);
