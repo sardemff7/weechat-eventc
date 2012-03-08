@@ -19,8 +19,12 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], ["$PACKAGE_NAME"], [Gettext Package])
 AC_DEFINE_UNQUOTED([LOCALEDIR], ["$localedir"], [Locale directory])
 IT_PROG_INTLTOOL([0.40.0])
 
-
 AC_PROG_INSTALL
+
+
+AM_CFLAGS="-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-but-set-variable"
+AM_LDFLAGS=""
+AM_VALAFLAGS=""
 
 AM_PROG_VALAC([0.13])
 
@@ -50,9 +54,6 @@ PKG_CHECK_MODULES(WEECHAT, weechat)
 WEECHAT_VALAFLAGS="--pkg weechat"
 AC_SUBST(WEECHAT_VALAFLAGS)
 
-AM_CFLAGS="-Wall -Wextra -Wno-unused-parameter"
-AM_LDFLAGS=""
-AM_VALAFLAGS=""
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [Enable debug]), enable_debug=$enableval, enable_debug=no)
 if test x$enable_debug = xyes; then
   AC_DEFINE([DEBUG], [1], [Activate debug mode])
