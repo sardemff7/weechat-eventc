@@ -59,6 +59,10 @@ namespace Eventd.WeechatPlugin.Config
         private static Weechat.Config.Option join;
         private static Weechat.Config.Option leave;
         private static Weechat.Config.Option quit;
+        private static Weechat.Config.Option blacklist;
+        private static Weechat.Config.Option highlight_blacklist;
+        private static string[] blacklist_list;
+        private static string[] highlight_blacklist_list;
 
         public bool do_highlight()
         {
@@ -104,6 +108,46 @@ namespace Eventd.WeechatPlugin.Config
         {
             return ! quit.boolean();
         }
+
+        private static void
+        blacklist_update(Weechat.Config.Option option)
+        {
+            assert(option == blacklist);
+
+            blacklist_list = blacklist.@string().split(",");
+        }
+
+        private static void
+        highlight_blacklist_update(Weechat.Config.Option option)
+        {
+            assert(option == highlight_blacklist);
+
+            highlight_blacklist_list = highlight_blacklist.@string().split(",");
+        }
+
+        public bool in_blacklist(string? nick)
+        {
+            if ( nick == null )
+                return false;
+            foreach ( var bnick in blacklist_list )
+            {
+                if ( nick == bnick )
+                    return true;
+            }
+            return false;
+        }
+
+        public bool in_highlight_blacklist(string? nick)
+        {
+            if ( nick == null )
+                return false;
+            foreach ( var bnick in highlight_blacklist_list )
+            {
+                if ( nick == bnick )
+                    return true;
+            }
+            return false;
+        }
     }
 
     public static void
@@ -134,6 +178,8 @@ namespace Eventd.WeechatPlugin.Config
         Events.join = new Weechat.Config.Option(file, events, "join", "boolean", "", null, 0, 0, "off", null, false);
         Events.leave = new Weechat.Config.Option(file, events, "leave", "boolean", "", null, 0, 0, "off", null, false);
         Events.quit = new Weechat.Config.Option(file, events, "quit", "boolean", "", null, 0, 0, "off", null, false);
+        Events.blacklist = new Weechat.Config.Option(file, events, "blacklist", "string", "", null, 0, 0, "", null, false, null, Events.blacklist_update);
+        Events.highlight_blacklist = new Weechat.Config.Option(file, events, "highlight-blacklist", "string", "", null, 0, 0, "", null, false, null, Events.highlight_blacklist_update);
     }
 
     public static void

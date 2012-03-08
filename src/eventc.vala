@@ -140,6 +140,13 @@ namespace Eventd
                 }
                 if ( name == null )
                     return Weechat.Rc.OK;
+                if ( name.has_prefix("highlight") )
+                {
+                    if ( Config.Events.in_highlight_blacklist(nick) )
+                        return Weechat.Rc.OK;
+                }
+                else if ( Config.Events.in_blacklist(nick) )
+                    return Weechat.Rc.OK;
 
                 event = new Eventd.Event(name);
                 if ( nick != null )
