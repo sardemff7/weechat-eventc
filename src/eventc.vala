@@ -107,7 +107,22 @@ namespace Eventd
                         case "notify":
                             if ( Config.Events.no_notify() )
                                 return Weechat.Rc.OK;
-                            name = "notify";
+                            if ( stag.length < 3 )
+                                break;
+                            switch ( stag[2] )
+                            {
+                            case "back":
+                                name = "back";
+                            break;
+                            case "away":
+                                name = "away";
+                                msg = message.split("\"")[1];
+                            break;
+                            case "still_away":
+                                name = "change-status-message";
+                                msg = message.split("\"")[1];
+                            break;
+                            }
                         break;
                         case "join":
                             if ( Config.Events.no_join() )
