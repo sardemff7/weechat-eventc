@@ -27,7 +27,7 @@ namespace Eventd
         namespace Callback
         {
             private static int
-            print(Weechat.Buffer? buffer, time_t date, string*[] tags, bool displayed, bool highlight, string prefix, string message)
+            print(Weechat.Buffer? buffer, time_t date, string*[] tags, bool displayed, bool highlight, string? prefix, string message)
             {
                 if ( ! eventc.is_connected() )
                     return Weechat.Rc.ERROR;
