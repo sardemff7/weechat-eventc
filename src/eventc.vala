@@ -59,7 +59,7 @@ namespace Eventd
                     if ( tag == "away_info" )
                         return Weechat.Rc.OK;
 
-                    var stag = tag.split("_");
+                    var stag = tag.split("_", 3);
                     switch ( stag[0] )
                     {
                     case "irc":
