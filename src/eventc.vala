@@ -32,7 +32,7 @@ namespace Eventd
                 if ( ! eventc.is_connected() )
                     return Weechat.Rc.ERROR;
 
-                if ( ( ! displayed ) || ( buffer == null ) || ( buffer.get_string("plugin") != "irc" ) )
+                if ( ( ! displayed ) || ( buffer == null ) || ( buffer.get_string("plugin") != "irc" ) || ( buffer == Weechat.current_buffer() ) )
                     return Weechat.Rc.OK;
 
                 Eventd.Event event = null;
