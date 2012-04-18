@@ -197,17 +197,6 @@ namespace Eventd
             }
 
             private static int
-            client_info_changed(string name, string @value)
-            {
-                if ( ! eventc.is_connected() )
-                    return Weechat.Rc.ERROR;
-
-                eventc.category = Config.get_category();
-                eventc.rename();
-                return  Weechat.Rc.OK;
-            }
-
-            private static int
             timeout_changed(string name, string @value)
             {
                 eventc.timeout = Config.get_timeout();
@@ -304,7 +293,6 @@ namespace Eventd
 
             eventc = new Eventc.Connection(Config.get_host(), Config.get_port(), Config.get_category());
 
-            eventc.mode = Eventc.Connection.Mode.NORMAL;
             eventc.timeout = Config.get_timeout();
             eventc.enable_proxy = false;
 
@@ -316,7 +304,6 @@ namespace Eventd
                                  Callback.command);
             Weechat.hook_print(null, null, null, true, Callback.print);
             Weechat.hook_config("eventc.server.*", Callback.server_info_changed);
-            Weechat.hook_config("eventc.client.*", Callback.client_info_changed);
             Weechat.hook_config("eventc.connection.timeout", Callback.timeout_changed);
         }
 
