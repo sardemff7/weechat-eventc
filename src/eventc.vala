@@ -24,12 +24,27 @@ namespace Eventd
 {
     namespace WeechatPlugin
     {
+        static bool
+        is_disconnected()
+        {
+            bool r = true;
+            try
+            {
+                r = ( ! eventc.is_connected() );
+            }
+            catch ( Eventc.EventcError e )
+            {
+                Weechat.printf(null, "eventc: Error checking connection event: %s", e.message);
+                connect();
+            }
+            return r;
+        }
         namespace Callback
         {
             private static int
             print(Weechat.Buffer? buffer, time_t date, string*[] tags, bool displayed, bool highlight, string? prefix, string message)
             {
-                if ( ! eventc.is_connected() )
+                if ( is_disconnected() )
                     return Weechat.Rc.ERROR;
 
                 if ( ( ! displayed ) || ( buffer == null ) || ( buffer.get_string("plugin") != "irc" ) || ( buffer == Weechat.current_buffer() ) )
@@ -187,7 +202,7 @@ namespace Eventd
             private static int
             server_info_changed(string name, string @value)
             {
-                if ( ! eventc.is_connected() )
+                if ( is_disconnected() )
                     return Weechat.Rc.ERROR;
 
                 eventc.host = Config.get_host();
@@ -212,16 +227,16 @@ namespace Eventd
                 switch ( args[1] )
                 {
                 case "connect":
-                    if ( eventc.is_connected() )
-                        disconnect(() => connect);
-                    else
+                    if ( is_disconnected() )
                         connect();
+                    else
+                        disconnect(() => connect);
                 break;
                 case "disconnect":
                     disconnect();
                 break;
                 case "event":
-                    if ( ! eventc.is_connected() )
+                    if ( is_disconnected() )
                         return Weechat.Rc.ERROR;
                     var event = new Eventd.Event(args[2]);
                     eventc.event(event);
@@ -263,7 +278,7 @@ namespace Eventd
         {
             Weechat.unhook(connect_hook);
 
-            if ( ! eventc.is_connected() )
+            if ( is_disconnected() )
             {
                 Weechat.printf(null, "eventc: Not connected");
                 if ( @callback != null )
