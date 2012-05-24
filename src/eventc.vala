@@ -231,7 +231,7 @@ namespace Eventd
                     if ( is_disconnected() )
                         connect();
                     else
-                        disconnect(() => connect);
+                        disconnect(() => { connect(); });
                 break;
                 case "disconnect":
                     disconnect();
