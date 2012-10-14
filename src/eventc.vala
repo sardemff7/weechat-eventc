@@ -24,6 +24,8 @@ namespace Eventd
 {
     namespace WeechatPlugin
     {
+        extern static bool @lock(GLib.SourceFunc callback);
+        extern static void unlock();
         static bool
         is_disconnected()
         {
@@ -41,6 +43,23 @@ namespace Eventd
         }
         namespace Callback
         {
+            private static async void
+            send(Eventd.Event event)
+            {
+                while ( ! @lock(send.callback) )
+                    yield;
+                try
+                {
+                    yield eventc.event(event);
+                }
+                catch ( Eventc.EventcError e )
+                {
+                    Weechat.printf(null, "eventc: Error sending event: %s", e.message);
+                    connect();
+                }
+                unlock();
+            }
+
             private static int
             print(Weechat.Buffer? buffer, time_t date, string*[] tags, bool displayed, bool highlight, string? prefix, string message)
             {
@@ -186,17 +205,8 @@ namespace Eventd
                     event.add_data("channel", channel);
                 event.add_data("message", ( msg != null ) ? msg : message);
 
-                eventc.event.begin(event, (obj, res) => {
-                    try
-                    {
-                        eventc.event.end(res);
-                    }
-                    catch ( Eventc.EventcError e )
-                    {
-                        Weechat.printf(null, "eventc: Error sending event: %s", e.message);
-                        connect();
-                    }
-                });
+                send.begin(event);
+
                 return  Weechat.Rc.OK;
             }
 
@@ -240,7 +250,7 @@ namespace Eventd
                     if ( is_disconnected() )
                         return Weechat.Rc.ERROR;
                     var event = new Eventd.Event(args[2]);
-                    eventc.event(event);
+                    send.begin(event);
                 break;
                 }
                 return  Weechat.Rc.OK;
@@ -251,26 +261,33 @@ namespace Eventd
         private static unowned Weechat.Hook connect_hook = null;
         private static uint64 tries;
 
+        private static async void
+        connect_async()
+        {
+            while ( ! @lock(connect_async.callback) )
+                yield;
+            try
+            {
+                yield eventc.connect();
+            }
+            catch ( Eventc.EventcError e )
+            {
+                Weechat.printf(null, "eventc: Error connecting to eventd: %s", e.message);
+                var max_tries = Config.get_max_tries();
+                if ( ( max_tries == 0 ) || ( ++tries < max_tries ) )
+                    connect_hook = Weechat.hook_timer(Config.get_retry_delay() * 1000, 0, 1, connect);
+                return;
+            }
+            tries = 0;
+            Weechat.printf(null, "eventc: Connected to eventd");
+            unlock();
+        }
+
+
         private static int
         connect(int remaining_calls = 0)
         {
-            eventc.connect.begin((obj, res) => {
-                try
-                {
-                    eventc.connect.end(res);
-                }
-                catch ( Eventc.EventcError e )
-                {
-                    Weechat.printf(null, "eventc: Error connecting to eventd: %s", e.message);
-                    var max_tries = Config.get_max_tries();
-                    if ( ( max_tries == 0 ) || ( ++tries < max_tries ) )
-                        connect_hook = Weechat.hook_timer(Config.get_retry_delay() * 1000, 0, 1, connect);
-                    return;
-                }
-                tries = 0;
-                Weechat.printf(null, "eventc: Connected to eventd");
-            });
-
+            connect_async.begin();
             return Weechat.Rc.OK;
         }
 
