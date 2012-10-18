@@ -150,6 +150,12 @@ namespace Weechat
     [CCode (cname = "struct t_gui_buffer", ref_function = "", unref_function = "")]
     public class Buffer
     {
+        [CCode (delegate_target_pos = 0.1, instance_pos = 0.2)]
+        public delegate Rc InputCallback(string input_data);
+        [CCode (delegate_target_pos = 0.1, instance_pos = 0.2)]
+        public delegate Rc CloseCallback();
+
+        public Buffer(string name, [CCode (delegate_target_pos = 2.1)] InputCallback? input_callback = null, [CCode (delegate_target_pos = 3.1)] CloseCallback? close_callback = null);
         public unowned string get_string(string property);
         public int get_integer(string property);
         public void @set(string property, string @value);
