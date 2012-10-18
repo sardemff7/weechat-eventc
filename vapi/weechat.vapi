@@ -23,25 +23,25 @@
 [CCode (cheader_filename = "weechat-plugin.h")]
 namespace Weechat
 {
-    [CCode (instance_pos = 0.9)]
+    [CCode (instance_pos = 0.1)]
     public delegate int PrintCallback(Buffer? buffer, time_t date, [CCode (array_length_pos = 2.9)] string*[] tags, bool displayed, bool highlight, string prefix, string message);
-    [CCode (instance_pos = 0.9)]
+    [CCode (instance_pos = 0.1)]
     public delegate int CommandCallback(Buffer? buffer, [CCode (array_length_cname = "args_lenght", array_length_pos = 1.9)] string[] args, [CCode (array_length_cname = "args_lenght", array_length_pos = 1.9)] string[] args_eol);
-    [CCode (instance_pos = 0.9)]
+    [CCode (instance_pos = 0.1)]
     public delegate int TimerCallback(int remaining_calls);
-    [CCode (instance_pos = 0.9)]
+    [CCode (instance_pos = 0.1)]
     public delegate int SignalCallback(string signal_name, string type_data, void *signal_data);
-    [CCode (instance_pos = 0.9)]
+    [CCode (instance_pos = 0.1)]
     public delegate int ConfigCallback(string name, string @value);
 
     [PrintfFormat]
-    public static void printf(Buffer? buffer, string format, ...);
+    public static void printf(Buffer? buffer = null, string format, ...);
 
-    public static unowned Hook hook_print(Buffer? buffer, string? tags, string? message, bool strip_colors, [CCode (delegate_target_pos = 5.9)] PrintCallback callback_func);
-    public static unowned Hook hook_command(string command, string description, string args, string args_description, string completion, [CCode (delegate_target_pos = 6.9)] CommandCallback callback_func);
-    public static unowned Hook hook_timer(long interval, int align_second, int max_calls, [CCode (delegate_target_pos = 4.9)] TimerCallback callback_func);
-    public static unowned Hook hook_signal(string signal_name, [CCode (delegate_target_pos = 2.9)] SignalCallback callback_func);
-    public static unowned Hook hook_config(string config_pattern, [CCode (delegate_target_pos = 2.9)] ConfigCallback callback_func);
+    public static unowned Hook hook_print(Buffer? buffer, string? tags, string? message, bool strip_colors, [CCode (delegate_target_pos = 5.1)] PrintCallback callback_func);
+    public static unowned Hook hook_command(string command, string description, string args, string args_description, string completion, [CCode (delegate_target_pos = 6.1)] CommandCallback callback_func);
+    public static unowned Hook hook_timer(long interval, int align_second, int max_calls, [CCode (delegate_target_pos = 4.1)] TimerCallback callback_func);
+    public static unowned Hook hook_signal(string signal_name, [CCode (delegate_target_pos = 2.1)] SignalCallback callback_func);
+    public static unowned Hook hook_config(string config_pattern, [CCode (delegate_target_pos = 2.1)] ConfigCallback callback_func);
     public static void unhook(Hook hook);
 
     public Buffer current_buffer();
@@ -92,49 +92,49 @@ namespace Weechat
         public static unowned int set_plugin(string name, string new_value);
         public static unowned bool is_set_plugin(string name);
 
-        [CCode (instance_pos = 0.9)]
+        [CCode (instance_pos = 0.1)]
         public delegate int ReloadCallback(Config file);
 
-        public Config(string name, [CCode (delegate_target_pos = 2.9)] ReloadCallback? callback_func = null);
+        public Config(string name, [CCode (delegate_target_pos = 2.1)] ReloadCallback? callback_func = null);
         public int read();
 
         [CCode (cname = "struct t_config_section", cprefix = "", ref_function = "", unref_function = "")]
         public class Section
         {
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate int ReadCallback(Config file, Section section, string option_name, string @value);
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate int WriteCallback(Config file, string section_name);
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate int WriteDefaultCallback(Config file, string section_name);
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate int CreateOptionCallback(Config file, Section section, string option_name, string @value);
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate int DeleteOptionCallback(Config file, Section section, Option option);
 
             [CCode (cname = "weechat_config_new_section")]
-            public Section(Config file, string name, bool user_can_add_options, bool user_can_delete_options, [CCode (delegate_target_pos = 5.9)] ReadCallback? read_callback = null, [CCode (delegate_target_pos = 7.9)] WriteCallback? write_callback = null, [CCode (delegate_target_pos = 9.9)] WriteDefaultCallback? write_default_callback = null, [CCode (delegate_target_pos = 11.9)] CreateOptionCallback? create_option_callback = null, [CCode (delegate_target_pos = 13.9)] DeleteOptionCallback? delete_option_callback = null);
+            public Section(Config file, string name, bool user_can_add_options, bool user_can_delete_options, [CCode (delegate_target_pos = 5.1)] ReadCallback? read_callback = null, [CCode (delegate_target_pos = 6.1)] WriteCallback? write_callback = null, [CCode (delegate_target_pos = 7.1)] WriteDefaultCallback? write_default_callback = null, [CCode (delegate_target_pos = 8.1)] CreateOptionCallback? create_option_callback = null, [CCode (delegate_target_pos = 9.1)] DeleteOptionCallback? delete_option_callback = null);
         }
 
         [CCode (cname = "struct t_config_option", cprefix = "", ref_function = "", unref_function = "")]
         public class Option
         {
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate bool CheckValueCallback(Option option, string @value);
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate void ChangeCallback(Option option);
 
-            [CCode (instance_pos = 0.9)]
+            [CCode (instance_pos = 0.1)]
             public delegate void DeleteCallback(Option option);
 
             [CCode (cname = "weechat_config_new_option")]
-            public Option(Config file, Section section, string name, string type, string description, string? string_values, int min, int max, string default_value, string? @value, bool null_value_allowed, [CCode (delegate_target_pos = 12.9)] CheckValueCallback? check_value_callback = null, [CCode (delegate_target_pos = 14.9)] ChangeCallback? change_callback = null, [CCode (delegate_target_pos = 16.9)] DeleteCallback? delete_callback = null);
+            public Option(Config file, Section section, string name, string type, string description, string? string_values, int min, int max, string default_value, string? @value, bool null_value_allowed, [CCode (delegate_target_pos = 12.1)] CheckValueCallback? check_value_callback = null, [CCode (delegate_target_pos = 13.1)] ChangeCallback? change_callback = null, [CCode (delegate_target_pos = 14.1)] DeleteCallback? delete_callback = null);
 
             [CCode (cname = "weechat_config_integer")]
             public int integer();
