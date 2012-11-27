@@ -31,7 +31,6 @@ namespace Eventd.WeechatPlugin.Config
     private static Weechat.Config.Section events;
 
     private static Weechat.Config.Option host;
-    private static Weechat.Config.Option port;
 
     private static Weechat.Config.Option category;
 
@@ -40,7 +39,6 @@ namespace Eventd.WeechatPlugin.Config
     private static Weechat.Config.Option timeout;
 
     public unowned string get_host() { return host.@string(); }
-    public uint16 get_port() { return (uint16)port.integer(); }
 
     public unowned string get_category() { return category.@string(); }
 
@@ -161,7 +159,6 @@ namespace Eventd.WeechatPlugin.Config
         events = new Weechat.Config.Section(file, "events", false, false);
 
         host = new Weechat.Config.Option(file, server, "host", "string", "", null, 0, 0, "localhost", null, false);
-        port = new Weechat.Config.Option(file, server, "port", "integer", "", null, 0, 65535, "7100", null, false);
 
         category = new Weechat.Config.Option(file, client, "category", "string", "", null, 0, 0, "irc", null, false);
 

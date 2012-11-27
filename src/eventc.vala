@@ -217,7 +217,6 @@ namespace Eventd
                     return Weechat.Rc.ERROR;
 
                 eventc.host = Config.get_host();
-                eventc.port = Config.get_port();
                 connect();
                 return  Weechat.Rc.OK;
             }
@@ -324,7 +323,7 @@ namespace Eventd
             Config.init();
             Config.read();
 
-            eventc = new Eventc.Connection(Config.get_host(), Config.get_port(), Config.get_category());
+            eventc = new Eventc.Connection(Config.get_host(), Config.get_category());
 
             eventc.timeout = Config.get_timeout();
             eventc.enable_proxy = false;
