@@ -24,6 +24,61 @@ namespace Eventd
 {
     namespace WeechatPlugin
     {
+        Weechat.Buffer debug_buffer = null;
+
+        static void
+        log_handler(string? domain, GLib.LogLevelFlags level, string message)
+        {
+            if ( debug_buffer == null )
+                return;
+
+            unowned string log_level_message = "";
+
+            switch ( level & GLib.LogLevelFlags.LEVEL_MASK )
+            {
+                case GLib.LogLevelFlags.LEVEL_ERROR:
+                    log_level_message = "ERROR";
+                break;
+                case GLib.LogLevelFlags.LEVEL_CRITICAL:
+                    log_level_message = "CRITICAL";
+                break;
+                case GLib.LogLevelFlags.LEVEL_WARNING:
+                    log_level_message = "WARNING";
+                break;
+                case GLib.LogLevelFlags.LEVEL_MESSAGE:
+                    log_level_message = "MESSAGE";
+                break;
+                case GLib.LogLevelFlags.LEVEL_INFO:
+                    log_level_message = "INFO";
+                break;
+                case GLib.LogLevelFlags.LEVEL_DEBUG:
+                    log_level_message = "DEBUG";
+                break;
+            }
+
+            GLib.StringBuilder full_message;
+
+            full_message = new GLib.StringBuilder("(");
+
+            full_message.append(log_level_message);
+
+            if ( domain != null )
+                full_message.append_printf(" [%s]", domain);
+
+            full_message.append("\t");
+            full_message.append(message);
+
+            Weechat.printf(debug_buffer, full_message.str);
+        }
+
+        static int
+        debug_buffer_close()
+        {
+            debug_buffer = null;
+            return Weechat.Rc.OK;
+        }
+
+
         extern static bool @lock(GLib.SourceFunc callback);
         extern static void unlock();
         static bool
@@ -245,11 +300,8 @@ namespace Eventd
                 case "disconnect":
                     disconnect();
                 break;
-                case "event":
-                    if ( is_disconnected() )
-                        return Weechat.Rc.ERROR;
-                    var event = new Eventd.Event(args[2]);
-                    send.begin(event);
+                case "debug":
+                    debug_buffer = new Weechat.Buffer("eventc-debug", null, debug_buffer_close);
                 break;
                 }
                 return  Weechat.Rc.OK;
@@ -330,9 +382,11 @@ namespace Eventd
 
             connect();
 
+            GLib.Log.set_default_handler(log_handler);
+
             Weechat.hook_command("eventc", "Control eventc",
-                                 "connect | disconnect", "",
-                                 "connect || disconnect || event",
+                                 "connect | disconnect | debug", "",
+                                 "connect || disconnect | debug",
                                  Callback.command);
             Weechat.hook_print(null, null, null, true, Callback.print);
             Weechat.hook_config("eventc.server.*", Callback.server_info_changed);
