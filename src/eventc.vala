@@ -105,7 +105,7 @@ namespace Eventd
                     yield;
                 try
                 {
-                    yield eventc.event(event);
+                    eventc.event(event);
                 }
                 catch ( Eventc.EventcError e )
                 {
@@ -253,7 +253,7 @@ namespace Eventd
                 else if ( Config.Events.in_blacklist(nick) )
                     return Weechat.Rc.OK;
 
-                event = new Eventd.Event(name);
+                event = new Eventd.Event(Config.get_category(), name);
                 if ( nick != null )
                     event.add_data("nick", (owned)nick);
                 if ( channel != null )
@@ -375,7 +375,7 @@ namespace Eventd
             Config.init();
             Config.read();
 
-            eventc = new Eventc.Connection(Config.get_host(), Config.get_category());
+            eventc = new Eventc.Connection(Config.get_host());
 
             eventc.timeout = Config.get_timeout();
             eventc.enable_proxy = false;
