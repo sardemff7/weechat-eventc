@@ -130,13 +130,16 @@ namespace Eventd
                 string nick = null;
                 string msg = null;
 
+                unowned string category = null;
                 unowned string name = null;
                 switch ( buffer.get_string("localvar_type") )
                 {
                 case "channel":
+                    category = "chat";
                     channel = buffer.get_string("localvar_channel");
                 break;
                 case "private":
+                    category = "im";
                 break;
                 }
 
@@ -158,47 +161,38 @@ namespace Eventd
                         case "privmsg":
                             if ( highlight && Config.Events.do_highlight() )
                             {
-                                name = "highlight-msg";
+                                name = "highlight";
                                 continue;
                             }
                             if ( channel != null )
                             {
                                 if ( Config.Events.no_chat_msg() )
                                     return Weechat.Rc.OK;
-                                name = "chat-msg";
                             }
                             else
                             {
                                 if ( Config.Events.no_im_msg() )
                                     return Weechat.Rc.OK;
-                                name = "im-msg";
                             }
+                            name = "received";
                         break;
                         case "notice":
+                        category = "im";
                             if ( highlight && Config.Events.do_highlight() )
                             {
-                                name = "highligh-notice";
+                                name = "highlight";
                                 continue;
                             }
                             if ( Config.Events.no_notice() )
                                 return Weechat.Rc.OK;
-                            name = "notice";
-                        break;
-                        case "action":
-                            if ( highlight && Config.Events.do_highlight() )
-                            {
-                                name = "highligh-action";
-                                continue;
-                            }
-                            if ( Config.Events.no_action() )
-                                return Weechat.Rc.OK;
-                            name = "action";
+                            name = "received";
                         break;
                         case "notify":
                             if ( Config.Events.no_notify() )
                                 return Weechat.Rc.OK;
                             if ( stag.length < 3 )
                                 break;
+                            category = "presence";
                             switch ( stag[2] )
                             {
                             case "back":
@@ -209,7 +203,7 @@ namespace Eventd
                                 msg = message.split("\"")[1];
                             break;
                             case "still_away":
-                                name = "change-status-message";
+                                name = "message";
                                 msg = message.split("\"")[1];
                             break;
                             }
@@ -217,16 +211,19 @@ namespace Eventd
                         case "join":
                             if ( Config.Events.no_join() )
                                 return Weechat.Rc.OK;
+                            category = "presence";
                             name = "join";
                         break;
                         case "leave":
                             if ( Config.Events.no_leave() )
                                 return Weechat.Rc.OK;
+                            category = "presence";
                             name = "leave";
                         break;
                         case "quit":
                             if ( Config.Events.no_quit() )
                                 return Weechat.Rc.OK;
+                            category = "presence";
                             name = "quit";
                         break;
                         }
@@ -239,13 +236,21 @@ namespace Eventd
                         {
                         case "none":
                             return Weechat.Rc.OK;
+                        case "join":
+                            category = "presence";
+                            name = "online";
+                        break;
+                        case "quit":
+                            category = "presence";
+                            name = "offline";
+                        break;
                         }
                     break;
                     }
                 }
                 if ( name == null )
                     return Weechat.Rc.OK;
-                if ( name.has_prefix("highlight") )
+                if ( highlight )
                 {
                     if ( Config.Events.in_highlight_blacklist(nick) )
                         return Weechat.Rc.OK;
@@ -253,7 +258,7 @@ namespace Eventd
                 else if ( Config.Events.in_blacklist(nick) )
                     return Weechat.Rc.OK;
 
-                event = new Eventd.Event(Config.get_category(), name);
+                event = new Eventd.Event(category, name);
                 if ( nick != null )
                     event.add_data("nick", (owned)nick);
                 if ( channel != null )
