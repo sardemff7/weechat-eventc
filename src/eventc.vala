@@ -260,7 +260,7 @@ namespace Eventd
 
                 event = new Eventd.Event(category, name);
                 if ( nick != null )
-                    event.add_data("nick", (owned)nick);
+                    event.add_data("buddy-name", (owned)nick);
                 if ( channel != null )
                     event.add_data("channel", channel);
                 event.add_data("message", ( msg != null ) ? msg : message);
