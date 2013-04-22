@@ -36,7 +36,6 @@ namespace Eventd.WeechatPlugin.Config
 
     private static Weechat.Config.Option max_tries;
     private static Weechat.Config.Option retry_delay;
-    private static Weechat.Config.Option timeout;
 
     public unowned string get_host() { return host.@string(); }
 
@@ -44,7 +43,6 @@ namespace Eventd.WeechatPlugin.Config
 
     public int get_max_tries() { return max_tries.integer(); }
     public uint16 get_retry_delay() { return (uint16)retry_delay.integer(); }
-    public uint get_timeout() { return (uint)timeout.integer(); }
 
     namespace Events
     {
@@ -164,7 +162,6 @@ namespace Eventd.WeechatPlugin.Config
 
         max_tries = new Weechat.Config.Option(file, connection, "max-tries", "integer", "", null, -1, 100, "3", null, false);
         retry_delay = new Weechat.Config.Option(file, connection, "retry-delay", "integer", "", null, 0, 3600, "10", null, false);
-        timeout = new Weechat.Config.Option(file, connection, "timeout", "integer", "", null, 0, 3600, "3", null, false);
 
         Events.highlight = new Weechat.Config.Option(file, events, "highlight", "boolean", "", null, 0, 0, "on", null, false);
         Events.chat_msg = new Weechat.Config.Option(file, events, "chat-msg", "boolean", "", null, 0, 0, "off", null, false);

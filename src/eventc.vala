@@ -89,7 +89,7 @@ namespace Eventd
             {
                 r = ( ! eventc.is_connected() );
             }
-            catch ( Eventc.EventcError e )
+            catch ( Eventc.Error e )
             {
                 Weechat.printf(null, "eventc: Error checking connection event: %s", e.message);
                 connect();
@@ -107,7 +107,7 @@ namespace Eventd
                 {
                     eventc.event(event);
                 }
-                catch ( Eventc.EventcError e )
+                catch ( Eventc.Error e )
                 {
                     Weechat.printf(null, "eventc: Error sending event: %s", e.message);
                     connect();
@@ -282,13 +282,6 @@ namespace Eventd
             }
 
             private static int
-            timeout_changed(string name, string @value)
-            {
-                eventc.timeout = Config.get_timeout();
-                return  Weechat.Rc.OK;
-            }
-
-            private static int
             command(Weechat.Buffer? buffer, string[] args, string[] args_eol)
             {
                 if ( args.length < 2 )
@@ -326,7 +319,7 @@ namespace Eventd
             {
                 yield eventc.connect();
             }
-            catch ( Eventc.EventcError e )
+            catch ( Eventc.Error e )
             {
                 Weechat.printf(null, "eventc: Error connecting to eventd: %s", e.message);
                 var max_tries = Config.get_max_tries();
@@ -365,7 +358,7 @@ namespace Eventd
                 {
                     eventc.close.end(res);
                 }
-                catch ( Eventc.EventcError e )
+                catch ( Eventc.Error e )
                 {
                     Weechat.printf(null, "eventc: Error while closing connection to eventd: %s", e.message);
                 }
@@ -382,7 +375,6 @@ namespace Eventd
 
             eventc = new Eventc.Connection(Config.get_host());
 
-            eventc.timeout = Config.get_timeout();
             eventc.enable_proxy = false;
 
             connect();
@@ -395,7 +387,6 @@ namespace Eventd
                                  Callback.command);
             Weechat.hook_print(null, null, null, true, Callback.print);
             Weechat.hook_config("eventc.server.*", Callback.server_info_changed);
-            Weechat.hook_config("eventc.connection.timeout", Callback.timeout_changed);
         }
 
         public static void
