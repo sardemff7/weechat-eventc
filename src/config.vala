@@ -25,21 +25,16 @@ namespace Eventd.WeechatPlugin.Config
 {
     private static Weechat.Config file;
 
-    private static Weechat.Config.Section server;
-    private static Weechat.Config.Section client;
     private static Weechat.Config.Section connection;
     private static Weechat.Config.Section events;
 
     private static Weechat.Config.Option host;
 
-    private static Weechat.Config.Option category;
-
     private static Weechat.Config.Option max_tries;
     private static Weechat.Config.Option retry_delay;
 
-    public unowned string get_host() { return host.@string(); }
 
-    public unowned string get_category() { return category.@string(); }
+    public unowned string get_host() { return host.@string(); }
 
     public int get_max_tries() { return max_tries.integer(); }
     public uint16 get_retry_delay() { return (uint16)retry_delay.integer(); }
@@ -151,15 +146,10 @@ namespace Eventd.WeechatPlugin.Config
     {
         file = new Weechat.Config("eventc");
 
-        server = new Weechat.Config.Section(file, "server", false, false);
-        client = new Weechat.Config.Section(file, "client", false, false);
         connection = new Weechat.Config.Section(file, "connection", false, false);
         events = new Weechat.Config.Section(file, "events", false, false);
 
-        host = new Weechat.Config.Option(file, server, "host", "string", "", null, 0, 0, "localhost", null, false);
-
-        category = new Weechat.Config.Option(file, client, "category", "string", "", null, 0, 0, "irc", null, false);
-
+        host = new Weechat.Config.Option(file, connection, "host", "string", "", null, 0, 0, "", null, false);
         max_tries = new Weechat.Config.Option(file, connection, "max-tries", "integer", "", null, -1, 100, "3", null, false);
         retry_delay = new Weechat.Config.Option(file, connection, "retry-delay", "integer", "", null, 0, 3600, "10", null, false);
 
