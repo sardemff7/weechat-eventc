@@ -113,7 +113,10 @@ namespace Eventd
             private static int
             print(Weechat.Buffer? buffer, time_t date, string*[] tags, bool displayed, bool highlight, string? prefix, string message)
             {
-                if ( ( ! displayed ) || ( buffer == null ) || ( buffer.get_string("plugin") != "irc" ) || ( buffer == Weechat.current_buffer() ) )
+                if ( ( ! displayed ) || ( buffer == null ) || ( buffer.get_string("plugin") != "irc" ) )
+                    return Weechat.Rc.OK;
+
+                if ( Config.get_ignore_current_buffer() && ( buffer == Weechat.current_buffer() ) )
                     return Weechat.Rc.OK;
 
                 if ( is_disconnected() )

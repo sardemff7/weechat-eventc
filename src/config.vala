@@ -27,17 +27,21 @@ namespace Eventd.WeechatPlugin.Config
 
     private static Weechat.Config.Section connection;
     private static Weechat.Config.Section events;
+    private static Weechat.Config.Section restrictions;
 
     private static Weechat.Config.Option host;
 
     private static Weechat.Config.Option max_tries;
     private static Weechat.Config.Option retry_delay;
 
+    private static Weechat.Config.Option ignore_current_buffer;
 
     public unowned string get_host() { return host.@string(); }
 
     public int get_max_tries() { return max_tries.integer(); }
     public uint16 get_retry_delay() { return (uint16)retry_delay.integer(); }
+
+    public bool get_ignore_current_buffer() { return ignore_current_buffer.boolean(); }
 
     namespace Events
     {
@@ -148,10 +152,13 @@ namespace Eventd.WeechatPlugin.Config
 
         connection = new Weechat.Config.Section(file, "connection", false, false);
         events = new Weechat.Config.Section(file, "events", false, false);
+        restrictions = new Weechat.Config.Section(file, "restrictions", false, false);
 
         host = new Weechat.Config.Option(file, connection, "host", "string", "", null, 0, 0, "", null, false);
         max_tries = new Weechat.Config.Option(file, connection, "max-tries", "integer", "", null, -1, 100, "3", null, false);
         retry_delay = new Weechat.Config.Option(file, connection, "retry-delay", "integer", "", null, 0, 3600, "10", null, false);
+
+        ignore_current_buffer = new Weechat.Config.Option(file, restrictions, "ignore-current-buffer", "boolean", "", null, 0, 0, "true", null, false);
 
         Events.highlight = new Weechat.Config.Option(file, events, "highlight", "boolean", "", null, 0, 0, "on", null, false);
         Events.chat_msg = new Weechat.Config.Option(file, events, "chat-msg", "boolean", "", null, 0, 0, "off", null, false);
