@@ -68,6 +68,5 @@ AC_SUBST(AM_VALAFLAGS)
 
 AC_CONFIG_FILES([
   Makefile
-  po/Makefile.in
 ])
 AC_OUTPUT
