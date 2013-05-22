@@ -149,6 +149,8 @@ namespace Eventd
                         continue;
                     if ( tag == "away_info" )
                         return Weechat.Rc.OK;
+                    if ( tag == "notify_none" )
+                        return Weechat.Rc.OK;
 
                     var stag = tag.split("_", 3);
                     switch ( stag[0] )
@@ -175,7 +177,7 @@ namespace Eventd
                             name = "received";
                         break;
                         case "notice":
-                        category = "im";
+                            category = "im";
                             if ( highlight && Config.Events.do_highlight() )
                             {
                                 name = "highlight";
@@ -193,6 +195,12 @@ namespace Eventd
                             category = "presence";
                             switch ( stag[2] )
                             {
+                            case "join":
+                                name = "signed-on";
+                            break;
+                            case "quit":
+                                name = "signed-off";
+                            break;
                             case "back":
                                 name = "back";
                             break;
@@ -228,21 +236,6 @@ namespace Eventd
                     break;
                     case "nick":
                         nick = string.joinv("_", stag[1:-1]);
-                    break;
-                    case "notify":
-                        switch ( stag[1] )
-                        {
-                        case "none":
-                            return Weechat.Rc.OK;
-                        case "join":
-                            category = "presence";
-                            name = "online";
-                        break;
-                        case "quit":
-                            category = "presence";
-                            name = "offline";
-                        break;
-                        }
                     break;
                     }
                 }
