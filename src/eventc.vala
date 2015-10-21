@@ -82,6 +82,8 @@ namespace Eventd
         static bool
         is_disconnected()
         {
+            if ( eventc == null )
+                return false;
             bool r = true;
             try
             {
@@ -267,8 +269,15 @@ namespace Eventd
                 if ( is_disconnected() )
                     return Weechat.Rc.ERROR;
 
-                eventc.host = Config.get_host();
-                connect();
+                try
+                {
+                    eventc.set_host(Config.get_host());
+                    connect();
+                }
+                catch ( Eventc.Error e )
+                {
+
+                }
                 return  Weechat.Rc.OK;
             }
 
@@ -354,12 +363,19 @@ namespace Eventd
             Config.init();
             Config.read();
 
-            eventc = new Eventc.Connection(Config.get_host());
+            try
+            {
+                eventc = new Eventc.Connection(Config.get_host());
 
-            eventc.passive = true;
-            eventc.enable_proxy = false;
+                eventc.set_passive(true);
+                eventc.set_enable_proxy(false);
 
-            connect();
+                connect();
+            }
+            catch ( Eventc.Error e )
+            {
+
+            }
 
             GLib.Log.set_default_handler(log_handler);
 
