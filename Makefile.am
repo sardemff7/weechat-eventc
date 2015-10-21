@@ -6,7 +6,7 @@ AM_CFLAGS += \
 	-I $(top_srcdir)/include/ \
 	-I $(top_builddir)/include/ \
 	--include config.h \
-	--include define-weechat-plugin.h
+	$(null)
 
 AM_VALAFLAGS += \
 	--vapidir $(top_srcdir)/vapi/ \
@@ -43,7 +43,7 @@ eventc_la_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	-shared \
 	-avoid-version -module \
-	-export-symbols $(srcdir)/src/weechat-eventc.sym
+	-export-symbols-rexex weechat_plugin_*
 
 eventc_la_LIBADD = \
 	$(LIBEVENTC_LIBS) \

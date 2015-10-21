@@ -38,11 +38,6 @@ AC_SUBST(GLIB_VALAFLAGS)
 AC_DEFINE_UNQUOTED([GLIB_VERSION_MIN_REQUIRED], [(G_ENCODE_VERSION(${glib_min_major},${glib_min_minor}))], [The lower GLib version supported])
 
 #
-# Check for gthread-2.0
-#
-PKG_CHECK_MODULES(GTHREAD, gthread-2.0)
-
-#
 # Check for libeventc
 #
 PKG_CHECK_MODULES(LIBEVENTC, libeventc)
@@ -56,17 +51,16 @@ PKG_CHECK_MODULES(WEECHAT, weechat)
 WEECHAT_VALAFLAGS="--pkg weechat"
 AC_SUBST(WEECHAT_VALAFLAGS)
 
-AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug], [Enable debug]), enable_debug=$enableval, enable_debug=no)
-if test x$enable_debug = xyes; then
-  AC_DEFINE([DEBUG], [1], [Activate debug mode])
-  AM_CFLAGS="${AM_CFLAGS} -O0 -ggdb3"
-  AM_VALAFLAGS="${AM_VALAFLAGS} --debug -D DEBUG"
-fi
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_LDFLAGS)
 AC_SUBST(AM_VALAFLAGS)
 
+AH_BOTTOM([
+[#]include <weechat-plugin.h>
+extern struct t_weechat_plugin *weechat_plugin;
+])
+
 AC_CONFIG_FILES([
-  Makefile
+    Makefile
 ])
 AC_OUTPUT

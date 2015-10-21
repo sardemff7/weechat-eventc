@@ -35,7 +35,7 @@ namespace Weechat
     public delegate int ConfigCallback(string name, string @value);
 
     [PrintfFormat]
-    public static void printf(Buffer? buffer = null, string format, ...);
+    public static void printf(Buffer? buffer, string format, ...);
 
     public static unowned Hook hook_print(Buffer? buffer, string? tags, string? message, bool strip_colors, [CCode (delegate_target_pos = 5.1)] PrintCallback callback_func);
     public static unowned Hook hook_command(string command, string description, string args, string args_description, string completion, [CCode (delegate_target_pos = 6.1)] CommandCallback callback_func);
@@ -147,7 +147,7 @@ namespace Weechat
         }
     }
 
-    [CCode (intance_pos = 0.1)]
+    [CCode (instance_pos = 0.1)]
     public delegate int BufferInputCallback(Buffer buffer, string input_data);
     [CCode (instance_pos = 0.1)]
     public delegate int BufferCloseCallback(Buffer buffer);

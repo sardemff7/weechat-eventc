@@ -21,7 +21,6 @@
  */
 
 #include <glib.h>
-#include <glib-compat.h>
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <weechat-plugin.h>
@@ -42,7 +41,6 @@ int
 weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
 {
     weechat_plugin = plugin;
-    g_type_init();
     eventd_weechat_plugin_init(argv, argc);
     return WEECHAT_RC_OK;
 }
