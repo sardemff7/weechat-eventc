@@ -161,7 +161,8 @@ _wec_print_callback(gpointer data, struct t_gui_buffer *buffer, time_t date, gin
     const gchar *nick = NULL;
     gchar *msg = NULL;
 
-    for ( gint i = 0 ; i < tags_count  ; ++i )
+    gint i;
+    for ( i = 0 ; i < tags_count  ; ++i )
     {
         const gchar *tag = tags[i];
         if ( g_str_has_prefix(tag, "log") || g_str_has_prefix(tag, "no_") )
