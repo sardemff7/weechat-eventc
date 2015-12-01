@@ -211,8 +211,9 @@ _wec_print_callback(gpointer data, struct t_gui_buffer *buffer, time_t date, gin
     if ( _wec_config_boolean(restrictions, ignore_current_buffer) && ( buffer == weechat_current_buffer() ) )
         return WEECHAT_RC_OK;
 
-    if ( ! _wec_connect() )
-        return WEECHAT_RC_ERROR;
+    gint error = 0;
+    if ( ! eventc_light_connection_is_connected(_wec_context.client, &error) )
+        return WEECHAT_RC_OK;
 
     const gchar *category = NULL;
     const gchar *name = NULL;
