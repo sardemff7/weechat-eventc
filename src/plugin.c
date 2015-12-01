@@ -85,7 +85,7 @@ _wec_fd_callback(gpointer data, gint fd)
 static gint
 _wec_try_connect(gpointer data, gint remaining_calls)
 {
-    gint error;
+    gint error = 0;
     if ( eventc_light_connection_is_connected(_wec_context.client, &error) )
         return WEECHAT_RC_OK;
     if ( _wec_context.connect_hook != NULL )
@@ -116,7 +116,7 @@ _wec_disconnect(void)
     if ( _wec_context.connect_hook != NULL )
         weechat_unhook(_wec_context.connect_hook);
 
-    gint error;
+    gint error = 0;
     if ( eventc_light_connection_is_connected(_wec_context.client, &error) )
     {
         weechat_unhook(_wec_context.fd_hook);
