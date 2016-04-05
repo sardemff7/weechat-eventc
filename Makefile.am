@@ -28,6 +28,7 @@ eventc_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(WEECHAT_LIBS)
 
+-include local-rules.mk
 
 install-exec-hook: la-files-removal
 

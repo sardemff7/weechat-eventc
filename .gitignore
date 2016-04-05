@@ -3,3 +3,5 @@
 
 /src/*.c
 !/src/plugin.c
+
+/local-rules.mk
