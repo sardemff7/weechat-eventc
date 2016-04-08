@@ -22,6 +22,8 @@ glib_min_major="2"
 glib_min_minor="40"
 glib_min_version="${glib_min_major}.${glib_min_minor}"
 
+weechat_min_version="1.5"
+
 
 AM_CFLAGS="-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-but-set-variable"
 AM_LDFLAGS=""
@@ -29,21 +31,21 @@ AM_LDFLAGS=""
 #
 # Check for glib-2.0
 #
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= ${glib_min_version})
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= ${glib_min_version}])
 AC_DEFINE_UNQUOTED([GLIB_VERSION_MIN_REQUIRED], [(G_ENCODE_VERSION(${glib_min_major},${glib_min_minor}))], [The lower GLib version supported])
 
 #
 # Check for libeventc
 #
-PKG_CHECK_MODULES(LIBEVENTC, libeventc-light libeventd)
+PKG_CHECK_MODULES([LIBEVENTC], [libeventc-light libeventd])
 
 #
 # Check for weechat
 #
-PKG_CHECK_MODULES(WEECHAT, weechat)
+PKG_CHECK_MODULES([WEECHAT], [weechat >= ${weechat_min_version}])
 
-AC_SUBST(AM_CFLAGS)
-AC_SUBST(AM_LDFLAGS)
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_LDFLAGS])
 
 AC_CONFIG_FILES([
     Makefile

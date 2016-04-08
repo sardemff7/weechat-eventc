@@ -74,7 +74,7 @@ WEECHAT_PLUGIN_LICENSE("GPL3");
 
 static gboolean _wec_connect(void);
 static gint
-_wec_fd_callback(gpointer data, gint fd)
+_wec_fd_callback(gconstpointer user_data, gpointer data, gint fd)
 {
     if ( eventc_light_connection_read(_wec_context.client) < 0 )
         _wec_connect();
@@ -83,7 +83,7 @@ _wec_fd_callback(gpointer data, gint fd)
 }
 
 static gint
-_wec_try_connect(gpointer data, gint remaining_calls)
+_wec_try_connect(gconstpointer user_data, gpointer data, gint remaining_calls)
 {
     gint error = 0;
     if ( eventc_light_connection_is_connected(_wec_context.client, &error) )
@@ -93,20 +93,20 @@ _wec_try_connect(gpointer data, gint remaining_calls)
 
     if ( eventc_light_connection_connect(_wec_context.client) < 0 )
     {
-        _wec_context.connect_hook = weechat_hook_timer(GPOINTER_TO_UINT(data) * 1000, 60, 1, _wec_try_connect, GUINT_TO_POINTER(GPOINTER_TO_UINT(data) * 2));
+        _wec_context.connect_hook = weechat_hook_timer(GPOINTER_TO_UINT(user_data) * 1000, 60, 1, _wec_try_connect, GUINT_TO_POINTER(GPOINTER_TO_UINT(user_data) * 2), NULL);
         return WEECHAT_RC_ERROR;
     }
 
     _wec_context.connect_hook = NULL;
     _wec_context.fd = eventc_light_connection_get_socket(_wec_context.client);
-    _wec_context.fd_hook = weechat_hook_fd(_wec_context.fd, 1, 0, 0, _wec_fd_callback, NULL);
+    _wec_context.fd_hook = weechat_hook_fd(_wec_context.fd, 1, 0, 0, _wec_fd_callback, NULL, NULL);
     return WEECHAT_RC_OK;
 }
 
 static gboolean
 _wec_connect(void)
 {
-    return ( _wec_try_connect(GUINT_TO_POINTER(2), 1) == WEECHAT_RC_OK );
+    return ( _wec_try_connect(GUINT_TO_POINTER(2), NULL, 1) == WEECHAT_RC_OK );
 
 }
 
@@ -128,10 +128,10 @@ _wec_disconnect(void)
     _wec_context.fd_hook = NULL;
 }
 
-#define _wec_define_section(name) _wec_context.config.name.section = weechat_config_new_section(_wec_context.config.file, #name, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+#define _wec_define_section(name) _wec_context.config.name.section = weechat_config_new_section(_wec_context.config.file, #name, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 #define _wec_define_boolean(sname, name, default_value, description) _wec_define_boolean_(sname, #name, name, default_value, description)
-#define _wec_define_boolean_(sname, name, member, default_value, description) _wec_context.config.sname.member = weechat_config_new_option(_wec_context.config.file, _wec_context.config.sname.section, name, "boolean", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-#define _wec_define_string(sname, name, default_value, description) _wec_context.config.sname.name = weechat_config_new_option(_wec_context.config.file, _wec_context.config.sname.section, #name, "string", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+#define _wec_define_boolean_(sname, name, member, default_value, description) _wec_context.config.sname.member = weechat_config_new_option(_wec_context.config.file, _wec_context.config.sname.section, name, "boolean", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+#define _wec_define_string(sname, name, default_value, description) _wec_context.config.sname.name = weechat_config_new_option(_wec_context.config.file, _wec_context.config.sname.section, #name, "string", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 static void
 _wec_config_blacklist_update(gpointer data, struct t_config_option *option)
@@ -153,7 +153,7 @@ _wec_config_blacklist_update(gpointer data, struct t_config_option *option)
 static void
 _wec_config_init(void)
 {
-    _wec_context.config.file = weechat_config_new("eventc", NULL, NULL);
+    _wec_context.config.file = weechat_config_new("eventc", NULL, NULL, NULL);
 
     _wec_define_section(events);
     _wec_define_boolean(events, highlight, "on", "Highlight (channel and private), they are treated as normal messages (and filtred as such) if this setting is 'off'");
@@ -199,7 +199,7 @@ _wec_split_message(const gchar *s)
 }
 
 static gint
-_wec_print_callback(gpointer data, struct t_gui_buffer *buffer, time_t date, gint tags_count, const gchar **tags, gint displayed, gint highlight, const gchar *prefix, const gchar *message)
+_wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer *buffer, time_t date, gint tags_count, const gchar **tags, gint displayed, gint highlight, const gchar *prefix, const gchar *message)
 {
     if ( ( ! displayed ) || ( buffer == NULL ) )
         return WEECHAT_RC_OK;
@@ -358,7 +358,7 @@ cleanup:
 }
 
 gint
-_wec_command(gpointer data, struct t_gui_buffer *buffer, gint argc, gchar **argv, gchar **argv_eol)
+_wec_command(gconstpointer user_data, gpointer data, struct t_gui_buffer *buffer, gint argc, gchar **argv, gchar **argv_eol)
 {
     if ( argc < 2 )
         return WEECHAT_RC_ERROR;
@@ -389,8 +389,8 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
     _wec_context.client = eventc_light_connection_new(NULL);
     _wec_connect();
 
-    _wec_context.print_hook = weechat_hook_print(NULL, NULL, NULL, 1, _wec_print_callback, NULL);
-    _wec_context.command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect", "", "connect || disconnect", _wec_command, NULL);
+    _wec_context.print_hook = weechat_hook_print(NULL, NULL, NULL, 1, _wec_print_callback, NULL, NULL);
+    _wec_context.command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect", "", "connect || disconnect", _wec_command, NULL, NULL);
 
     return WEECHAT_RC_OK;
 }
