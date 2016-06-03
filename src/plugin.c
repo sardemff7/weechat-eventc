@@ -348,6 +348,7 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
         eventd_event_add_data(event, g_strdup("channel"), g_strdup(channel));
 
     eventd_event_add_data(event, g_strdup("message"), ( msg != NULL ) ? msg : g_strdup(message));
+    msg = NULL;
 
     eventc_light_connection_event(_wec_context.client, event);
     eventd_event_unref(event);
