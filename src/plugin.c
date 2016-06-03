@@ -228,8 +228,6 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
     }
     else if ( g_strcmp0(buffer_type, "private") == 0 )
         category = "im";
-    else
-        return WEECHAT_RC_OK;
 
     const gchar *nick = NULL;
     gchar *msg = NULL;
@@ -331,7 +329,7 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
             nick = tag + strlen("nick_");
     }
 
-    if ( name == NULL )
+    if ( ( category == NULL ) || ( name == NULL ) )
         goto cleanup;
 
     if ( g_hash_table_contains(_wec_context.blacklist, nick) )
