@@ -13,6 +13,7 @@ eventc_la_SOURCES = \
 
 eventc_la_CFLAGS = \
 	$(AM_CFLAGS) \
+	-DG_LOG_DOMAIN='"weechat-eventc"' \
 	$(LIBEVENTC_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(WEECHAT_CFLAGS)

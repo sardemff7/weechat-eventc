@@ -29,6 +29,7 @@
 #include <libeventc-light.h>
 
 typedef struct {
+    struct t_gui_buffer *buffer;
     EventcLightConnection *client;
     gboolean want_connected;
     gint fd;
@@ -97,6 +98,8 @@ _wec_try_connect(gconstpointer user_data, gpointer data, gint remaining_calls)
         return WEECHAT_RC_ERROR;
     }
 
+    g_debug("Connected");
+
     _wec_context.connect_hook = NULL;
     _wec_context.fd = eventc_light_connection_get_socket(_wec_context.client);
     _wec_context.fd_hook = weechat_hook_fd(_wec_context.fd, 1, 0, 0, _wec_fd_callback, NULL, NULL);
@@ -114,6 +117,7 @@ _wec_connect(void)
 static void
 _wec_disconnected_callback(EventcLightConnection *client, gpointer user_data)
 {
+    g_debug("Disconnected");
     if ( _wec_context.want_connected )
         _wec_connect();
 }
@@ -379,17 +383,56 @@ _wec_command(gconstpointer user_data, gpointer data, struct t_gui_buffer *buffer
     }
     else if ( g_strcmp0(argv[1], "disconnect") == 0 )
         _wec_disconnect();
+    else if ( g_strcmp0(argv[1], "debug") == 0 )
+    {
+        if ( _wec_context.buffer == NULL )
+        {
+            _wec_context.buffer = weechat_buffer_new("eventc", NULL, NULL, NULL, NULL, NULL, NULL);
+            g_debug("Created debug buffer");
+        }
+        else
+        {
+            weechat_buffer_close(_wec_context.buffer);
+            _wec_context.buffer = NULL;
+        }
+    }
     else
         return WEECHAT_RC_ERROR;
 
     return WEECHAT_RC_OK;
 }
 
+static void
+_wec_log_handler(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
+{
+    struct t_gui_buffer *buffer = NULL;
+
+    const gchar *prefix = weechat_prefix("action");
+    switch ( log_level & G_LOG_LEVEL_MASK )
+    {
+        case G_LOG_LEVEL_ERROR:
+        case G_LOG_LEVEL_CRITICAL:
+        case G_LOG_LEVEL_WARNING:
+            prefix = weechat_prefix("error");
+        break;
+        case G_LOG_LEVEL_MESSAGE:
+        case G_LOG_LEVEL_INFO:
+        case G_LOG_LEVEL_DEBUG:
+            if ( _wec_context.buffer == NULL )
+                return;
+            buffer = _wec_context.buffer;
+        break;
+}
+    weechat_printf(buffer, "%s[%s] %s", prefix, log_domain, message);
+
+}
 
 int
 weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
 {
     weechat_plugin = plugin;
+
+    g_log_set_default_handler(_wec_log_handler, NULL);
 
     _wec_context.blacklist = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
@@ -402,7 +445,7 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
     _wec_connect();
 
     _wec_context.print_hook = weechat_hook_print(NULL, NULL, NULL, 1, _wec_print_callback, NULL, NULL);
-    _wec_context.command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect", "", "connect || disconnect", _wec_command, NULL, NULL);
+    _wec_context.command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect | debug", "", "connect || disconnect || debug", _wec_command, NULL, NULL);
 
     return WEECHAT_RC_OK;
 }
