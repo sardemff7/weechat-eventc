@@ -30,6 +30,7 @@
 
 typedef struct {
     EventcLightConnection *client;
+    gboolean want_connected;
     gint fd;
     struct t_hook *fd_hook;
     struct t_hook *connect_hook;
@@ -76,8 +77,7 @@ static gboolean _wec_connect(void);
 static gint
 _wec_fd_callback(gconstpointer user_data, gpointer data, gint fd)
 {
-    if ( eventc_light_connection_read(_wec_context.client) < 0 )
-        _wec_connect();
+    eventc_light_connection_read(_wec_context.client);
 
     return WEECHAT_RC_OK;
 }
@@ -106,13 +106,23 @@ _wec_try_connect(gconstpointer user_data, gpointer data, gint remaining_calls)
 static gboolean
 _wec_connect(void)
 {
-    return ( _wec_try_connect(GUINT_TO_POINTER(2), NULL, 1) == WEECHAT_RC_OK );
+    _wec_context.want_connected = TRUE;
 
+    return ( _wec_try_connect(GUINT_TO_POINTER(2), NULL, 1) == WEECHAT_RC_OK );
+}
+
+static void
+_wec_disconnected_callback(EventcLightConnection *client, gpointer user_data)
+{
+    if ( _wec_context.want_connected )
+        _wec_connect();
 }
 
 static void
 _wec_disconnect(void)
 {
+    _wec_context.want_connected = FALSE;
+
     if ( _wec_context.connect_hook != NULL )
         weechat_unhook(_wec_context.connect_hook);
 
@@ -386,6 +396,9 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
     _wec_config_init();
 
     _wec_context.client = eventc_light_connection_new(NULL);
+
+    eventc_light_connection_set_disconnected_callback(_wec_context.client, _wec_disconnected_callback, NULL, NULL);
+
     _wec_connect();
 
     _wec_context.print_hook = weechat_hook_print(NULL, NULL, NULL, 1, _wec_print_callback, NULL, NULL);

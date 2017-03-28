@@ -21,7 +21,7 @@ AC_PROG_INSTALL
 glib_min_major="2"
 glib_min_minor="40"
 glib_min_version="${glib_min_major}.${glib_min_minor}"
-
+eventd_min_version="0.21.90"
 weechat_min_version="1.5"
 
 
@@ -37,7 +37,7 @@ AC_DEFINE_UNQUOTED([GLIB_VERSION_MIN_REQUIRED], [(G_ENCODE_VERSION(${glib_min_ma
 #
 # Check for libeventc
 #
-PKG_CHECK_MODULES([LIBEVENTC], [libeventc-light libeventd])
+PKG_CHECK_MODULES([LIBEVENTC], [libeventc-light >= ${eventd_min_version} libeventd])
 
 #
 # Check for weechat
