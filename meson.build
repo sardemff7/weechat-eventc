@@ -22,7 +22,7 @@ endforeach
 glib_min_major='2'
 glib_min_minor='40'
 glib_min_version='.'.join([glib_min_major, glib_min_minor])
-eventd_min_version='0.21.90'
+eventd_min_version='0.23.90'
 weechat_min_version='1.7'
 glib = dependency('glib-2.0', version: '>= @0@'.format(glib_min_version))
 libeventd = dependency('libeventd', version: '>= @0@'.format(eventd_min_version))
