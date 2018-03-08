@@ -89,8 +89,6 @@ _wec_try_connect(gconstpointer user_data, gpointer data, gint remaining_calls)
     gint error = 0;
     if ( eventc_light_connection_is_connected(_wec_context.client, &error) )
         return WEECHAT_RC_OK;
-    if ( _wec_context.connect_hook != NULL )
-        return WEECHAT_RC_ERROR;
 
     if ( eventc_light_connection_connect(_wec_context.client) < 0 )
     {
