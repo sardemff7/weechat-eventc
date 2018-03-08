@@ -29,6 +29,12 @@
 #include <libeventc-light.h>
 
 typedef struct {
+    struct t_config_option *option;
+    gboolean whitelist;
+    GHashTable *names;
+} WecEventFilter;
+
+typedef struct {
     struct t_gui_buffer *buffer;
     EventcLightConnection *client;
     gboolean want_connected;
@@ -43,24 +49,23 @@ typedef struct {
         struct {
             struct t_config_section *section;
 
-            struct t_config_option *highlight;
-            struct t_config_option *chat;
-            struct t_config_option *im;
-            struct t_config_option *notice;
-            struct t_config_option *action;
-            struct t_config_option *notify;
-            struct t_config_option *join;
-            struct t_config_option *leave;
-            struct t_config_option *quit;
+            WecEventFilter highlight;
+            WecEventFilter chat;
+            WecEventFilter im;
+            WecEventFilter notice;
+            WecEventFilter action;
+            WecEventFilter notify;
+            WecEventFilter join;
+            WecEventFilter leave;
+            WecEventFilter quit;
         } events;
         struct {
             struct t_config_section *section;
 
             struct t_config_option *ignore_current_buffer;
-            struct t_config_option *blacklist;
+            WecEventFilter nick_filter;
         } restrictions;
     } config;
-    GHashTable *blacklist;
 } WecContext;
 
 #define _wec_config_boolean(sname, name) weechat_config_boolean(context->config.sname.name)
@@ -149,26 +154,88 @@ _wec_disconnect(WecContext *context)
     context->fd_hook = NULL;
 }
 
-#define _wec_define_section(name) context->config.name.section = weechat_config_new_section(context->config.file, #name, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-#define _wec_define_boolean(sname, name, default_value, description) _wec_define_boolean_(sname, #name, name, default_value, description)
-#define _wec_define_boolean_(sname, name, member, default_value, description) context->config.sname.member = weechat_config_new_option(context->config.file, context->config.sname.section, name, "boolean", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-#define _wec_define_string(sname, name, default_value, description) context->config.sname.name = weechat_config_new_option(context->config.file, context->config.sname.section, #name, "string", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+#define _wec_define_section(name) G_STMT_START { \
+        context->config.name.section = weechat_config_new_section(context->config.file, #name, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); \
+    } G_STMT_END
+#define _wec_define_boolean(sname, name, member, default_value, description) G_STMT_START { \
+        context->config.sname.member = weechat_config_new_option(context->config.file, context->config.sname.section, name, "boolean", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); \
+    } G_STMT_END
+#define _wec_define_string(sname, name, member, default_value, description) G_STMT_START { \
+        context->config.sname.member = weechat_config_new_option(context->config.file, context->config.sname.section, #name, "string", description, NULL, 0, 0, default_value, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); \
+    } G_STMT_END
+#define _wec_define_filter(sname, name, member, default_value, description) G_STMT_START { \
+        context->config.sname.member.option = weechat_config_new_option(context->config.file, context->config.sname.section, name, "string", description, NULL, 0, 0, default_value, NULL, 0, _wec_filter_check, &context->config.sname.member, NULL, _wec_filter_update, &context->config.sname.member, NULL, NULL, NULL, NULL); \
+        context->config.sname.member.names = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL); \
+    } G_STMT_END
+#define _wec_define_filter_simple(sname, name, default_value, description) _wec_define_filter(sname, #name, name, default_value, description)
+#define _wec_process_filter(sname, member) G_STMT_START { \
+        _wec_filter_update(&context->config.sname.member, NULL, context->config.sname.member.option); \
+    } G_STMT_END
+#define _wec_clean_filter(sname, member) G_STMT_START { \
+        g_hash_table_unref(context->config.sname.member.names); \
+    } G_STMT_END
+
+#define _wec_event_ignore(name) _wec_filter_ignore(&context->config.events.name, buffer_name)
+static inline gboolean
+_wec_filter_ignore(WecEventFilter *filter, const gchar *name)
+{
+    if ( name == NULL )
+        return TRUE;
+    return ( filter->whitelist != g_hash_table_contains(filter->names, name) );
+}
+
+static gint
+_wec_filter_check(gconstpointer user_data, gpointer data, struct t_config_option *option, const gchar *value)
+{
+    WecEventFilter *filter = (WecEventFilter *) user_data;
+
+    g_return_val_if_fail(filter->option == option, WEECHAT_RC_ERROR);
+
+    if ( g_utf8_get_char(value) != '+' )
+        return 1;
+
+    value = g_utf8_next_char(value);
+    gboolean want_end = TRUE;
+    if ( g_utf8_get_char(value) == ' ' )
+    {
+        want_end = FALSE;
+        value = g_utf8_next_char(value);
+    }
+    if ( g_utf8_get_char(value) == '\0' )
+        return want_end ? 1 : 0;
+    return 1;
+}
 
 static void
-_wec_config_blacklist_update(gpointer data, struct t_config_option *option)
+_wec_filter_update(gconstpointer user_data, gpointer data, struct t_config_option *option)
 {
-    g_return_if_fail(option == _wec_context.config.restrictions.blacklist);
+    WecEventFilter *filter = (WecEventFilter *) user_data;
 
-    g_hash_table_remove_all(_wec_context.blacklist);
+    g_return_if_fail(filter->option == option);
 
-    const gchar *nick, *s;
-    nick = weechat_config_string(option);
-    while ( ( s = g_utf8_strchr(nick, -1, ' ') ) != NULL )
+    const gchar *value = weechat_config_string(filter->option);
+
+    g_hash_table_remove_all(filter->names);
+
+    filter->whitelist = ( g_utf8_get_char(value) == '+' );
+    if ( filter->whitelist )
     {
-        g_hash_table_add(_wec_context.blacklist, g_strndup(nick, s - nick));
-        nick = s + 1;
+        value = g_utf8_next_char(value);
+        if ( g_utf8_get_char(value) == '\0' )
+            return;
+        value = g_utf8_next_char(value);
     }
-    g_hash_table_add(_wec_context.blacklist, g_strdup(nick));
+
+    gchar **list, **n;
+    list = g_strsplit(value, " ", -1);
+    for ( n = list ; *n != NULL ; ++n )
+    {
+        if ( g_utf8_get_char(*n) == '\0' )
+            g_free(*n);
+        else
+            g_hash_table_add(filter->names, *n);
+    }
+    g_free(list);
 }
 
 static void
@@ -177,19 +244,19 @@ _wec_config_init(WecContext *context)
     context->config.file = weechat_config_new("eventc", NULL, NULL, NULL);
 
     _wec_define_section(events);
-    _wec_define_boolean(events, highlight, "on", "Highlight (channel and private), they are treated as normal messages (and filtred as such) if this setting is 'off'");
-    _wec_define_boolean(events, chat, "off", "Channel messages");
-    _wec_define_boolean(events, im, "on", "Private messages");
-    _wec_define_boolean(events, notice, "on", "Notices");
-    _wec_define_boolean(events, action, "off", "Action messages (/me)");
-    _wec_define_boolean(events, notify, "on", "Presence notifications");
-    _wec_define_boolean(events, join, "off", "Channel join");
-    _wec_define_boolean(events, leave, "off", "Channel leave");
-    _wec_define_boolean(events, quit, "off", "Channel quit");
+    _wec_define_filter_simple(events, highlight, "", "Highlight");
+    _wec_define_filter_simple(events, chat, "+", "Channel messages");
+    _wec_define_filter_simple(events, im, "", "Private messages");
+    _wec_define_filter_simple(events, notice, "", "Notices");
+    _wec_define_filter_simple(events, action, "+", "Action messages (/me)");
+    _wec_define_filter_simple(events, notify, "*", "Presence notifications");
+    _wec_define_filter_simple(events, join, "+", "Channel join");
+    _wec_define_filter_simple(events, leave, "+", "Channel leave");
+    _wec_define_filter_simple(events, quit, "+", "Channel quit");
 
     _wec_define_section(restrictions);
-    _wec_define_boolean_(restrictions, "ignore-current-buffer", ignore_current_buffer, "on", "Ignore messages from currently displayed buffer");
-    _wec_define_string(restrictions, blacklist, "", "A (space-separated) list of nicknames to completely ignore");
+    _wec_define_boolean(restrictions, "ignore-current-buffer", ignore_current_buffer, "on", "Ignore messages from currently displayed buffer");
+    _wec_define_filter(restrictions, "nick-filter", nick_filter, "", "A (space-separated) list of nicknames to completely ignore");
 
     switch ( weechat_config_read(context->config.file) )
     {
@@ -201,6 +268,32 @@ _wec_config_init(WecContext *context)
         weechat_config_write(context->config.file);
     break;
     }
+
+    _wec_process_filter(events, highlight);
+    _wec_process_filter(events, chat);
+    _wec_process_filter(events, im);
+    _wec_process_filter(events, notice);
+    _wec_process_filter(events, action);
+    _wec_process_filter(events, notify);
+    _wec_process_filter(events, join);
+    _wec_process_filter(events, leave);
+    _wec_process_filter(events, quit);
+    _wec_process_filter(restrictions, nick_filter);
+}
+
+static void
+_wec_config_uninit(WecContext *context)
+{
+    _wec_clean_filter(events, highlight);
+    _wec_clean_filter(events, chat);
+    _wec_clean_filter(events, im);
+    _wec_clean_filter(events, notice);
+    _wec_clean_filter(events, action);
+    _wec_clean_filter(events, notify);
+    _wec_clean_filter(events, join);
+    _wec_clean_filter(events, leave);
+    _wec_clean_filter(events, quit);
+    _wec_clean_filter(restrictions, nick_filter);
 }
 
 static gchar *
@@ -242,15 +335,20 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
     const gchar *name = NULL;
 
     const gchar *channel = NULL;
+    const gchar *buffer_name = NULL;
 
     const gchar *buffer_type = weechat_buffer_get_string(buffer, "localvar_type");
     if ( g_strcmp0(buffer_type, "channel") == 0 )
     {
         category = "chat";
         channel = weechat_buffer_get_string(buffer, "localvar_channel");
+        buffer_name = channel;
     }
     else if ( g_strcmp0(buffer_type, "private") == 0 )
+    {
         category = "im";
+        buffer_name = weechat_buffer_get_string(buffer, "localvar_channel");
+    }
 
     const gchar *nick = NULL;
     gchar *msg = NULL;
@@ -271,15 +369,19 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
 
             if ( g_strcmp0(tag, "privmsg") == 0 )
             {
-                if ( highlight && _wec_config_boolean(events, highlight) )
+                if ( highlight )
                 {
+                    if ( _wec_event_ignore(highlight) )
+                        break;
                     name = "highlight";
                     continue;
                 }
-                if ( ( channel != NULL ) && ( ! _wec_config_boolean(events, chat) ) )
-                    break;
-
-                if ( ! _wec_config_boolean(events, im) )
+                else if ( channel != NULL )
+                {
+                    if ( _wec_event_ignore(chat) )
+                        break;
+                }
+                else if ( _wec_event_ignore(im) )
                     break;
 
                 name = "received";
@@ -287,20 +389,21 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
             else if ( g_strcmp0(tag, "notice") == 0 )
             {
                 category = "im";
-                if ( highlight && _wec_config_boolean(events, highlight) )
+                if ( highlight )
                 {
+                    if ( _wec_event_ignore(highlight) )
+                        break;
                     name = "highlight";
                     continue;
                 }
-
-                if ( ! _wec_config_boolean(events, notice) )
+                else if ( _wec_event_ignore(notice) )
                     break;
 
                 name = "received";
             }
             else if ( g_str_has_prefix(tag, "notify_") )
             {
-                if ( ! _wec_config_boolean(events, notify) )
+                if ( _wec_event_ignore(notify) )
                     break;
 
                 tag += strlen("notify_");
@@ -325,7 +428,7 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
             }
             else if ( g_strcmp0(tag, "join") == 0 )
             {
-                if ( ! _wec_config_boolean(events, join) )
+                if ( _wec_event_ignore(join) )
                     break;
 
                 category = "presence";
@@ -333,7 +436,7 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
             }
             else if ( g_strcmp0(tag, "leave") == 0 )
             {
-                if ( ! _wec_config_boolean(events, leave) )
+                if ( _wec_event_ignore(leave) )
                     break;
 
                 category = "presence";
@@ -341,7 +444,7 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
             }
             else if ( g_strcmp0(tag, "quit") == 0 )
             {
-                if ( ! _wec_config_boolean(events, quit) )
+                if ( _wec_event_ignore(quit) )
                     break;
 
                 category = "presence";
@@ -355,7 +458,7 @@ _wec_print_callback(gconstpointer user_data, gpointer data, struct t_gui_buffer 
     if ( ( category == NULL ) || ( name == NULL ) )
         goto cleanup;
 
-    if ( g_hash_table_contains(context->blacklist, nick) )
+    if ( _wec_filter_ignore(&context->config.restrictions.nick_filter, nick) )
         goto cleanup;
 
     EventdEvent *event;
@@ -448,8 +551,6 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
 
     g_log_set_default_handler(_wec_log_handler, context);
 
-    context->blacklist = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-
     _wec_config_init(context);
 
     context->client = eventc_light_connection_new(NULL);
@@ -473,7 +574,7 @@ weechat_plugin_end(struct t_weechat_plugin *plugin)
 
     eventc_light_connection_unref(context->client);
 
-    g_hash_table_unref(context->blacklist);
+    _wec_config_uninit(context);
 
     return WEECHAT_RC_OK;
 }
