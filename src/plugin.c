@@ -32,6 +32,7 @@ typedef struct {
     struct t_gui_buffer *buffer;
     EventcLightConnection *client;
     gboolean want_connected;
+    gint reconnect_count;
     gint fd;
     struct t_hook *fd_hook;
     struct t_hook *connect_hook;
@@ -88,7 +89,7 @@ _wec_fd_callback(gconstpointer user_data, gpointer data, gint fd)
 static gint
 _wec_try_connect(gconstpointer user_data, gpointer data, gint remaining_calls)
 {
-    WecContext *context = &_wec_context;
+    WecContext *context = (WecContext *) user_data;
 
     gint error = 0;
     if ( eventc_light_connection_is_connected(context->client, &error) )
@@ -96,12 +97,13 @@ _wec_try_connect(gconstpointer user_data, gpointer data, gint remaining_calls)
 
     if ( eventc_light_connection_connect(context->client) < 0 )
     {
-        context->connect_hook = weechat_hook_timer(GPOINTER_TO_UINT(user_data) * 1000, 60, 1, _wec_try_connect, GUINT_TO_POINTER(GPOINTER_TO_UINT(user_data) * 2), NULL);
+        context->connect_hook = weechat_hook_timer((1000 << ++context->reconnect_count), 60, 1, _wec_try_connect, context, NULL);
         return WEECHAT_RC_ERROR;
     }
 
     g_debug("Connected");
 
+    context->reconnect_count = 0;
     context->connect_hook = NULL;
     context->fd = eventc_light_connection_get_socket(context->client);
     context->fd_hook = weechat_hook_fd(context->fd, 1, 0, 0, _wec_fd_callback, context, NULL);
@@ -113,7 +115,7 @@ _wec_connect(WecContext *context)
 {
     context->want_connected = TRUE;
 
-    return ( _wec_try_connect(GUINT_TO_POINTER(2), NULL, 1) == WEECHAT_RC_OK );
+    return ( _wec_try_connect(context, NULL, 0) == WEECHAT_RC_OK );
 }
 
 static void
@@ -141,6 +143,7 @@ _wec_disconnect(WecContext *context)
         eventc_light_connection_close(context->client);
     }
 
+    context->reconnect_count = 0;
     context->connect_hook = NULL;
     context->fd = 0;
     context->fd_hook = NULL;
