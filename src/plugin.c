@@ -543,6 +543,47 @@ _wec_log_handler(const gchar *log_domain, GLogLevelFlags log_level, const gchar 
 
 }
 
+#if GLIB_CHECK_VERSION(2, 50, 0)
+static GLogWriterOutput
+_wec_log_writer(GLogLevelFlags log_level, const GLogField *fields, gsize n_fields, gpointer user_data)
+{
+    WecContext *context = (WecContext *) user_data;
+
+    struct t_gui_buffer *buffer = NULL;
+    const gchar *prefix = weechat_prefix("action");
+    switch ( log_level & G_LOG_LEVEL_MASK )
+    {
+        case G_LOG_LEVEL_ERROR:
+        case G_LOG_LEVEL_CRITICAL:
+        case G_LOG_LEVEL_WARNING:
+            prefix = weechat_prefix("error");
+        break;
+        case G_LOG_LEVEL_MESSAGE:
+        case G_LOG_LEVEL_INFO:
+        case G_LOG_LEVEL_DEBUG:
+            if ( context->buffer == NULL )
+                return G_LOG_WRITER_HANDLED;
+            buffer = context->buffer;
+        break;
+    }
+
+    const gchar *log_domain = NULL;
+    const gchar *message = NULL;
+    gsize i;
+    for ( i = 0 ; i < n_fields ; ++i )
+    {
+        if ( g_strcmp0(fields[i].key, "MESSAGE") == 0 )
+            message = fields[i].value;
+        else if ( g_strcmp0(fields[i].key, "GLIB_DOMAIN") == 0 )
+            log_domain = fields[i].value;
+    }
+    g_return_val_if_fail(message != NULL, G_LOG_WRITER_UNHANDLED);
+
+    weechat_printf(buffer, "%s[%s] %s", prefix, log_domain, message);
+    return G_LOG_WRITER_HANDLED;
+}
+#endif /* GLIB_CHECK_VERSION(2, 50, 0) */
+
 int
 weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
 {
@@ -550,6 +591,9 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
     WecContext *context = &_wec_context;
 
     g_log_set_default_handler(_wec_log_handler, context);
+#if GLIB_CHECK_VERSION(2, 50, 0)
+    g_log_set_writer_func(_wec_log_writer, context, NULL);
+#endif /* GLIB_CHECK_VERSION(2, 50, 0) */
 
     _wec_config_init(context);
 
