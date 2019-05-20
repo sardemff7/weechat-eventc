@@ -43,6 +43,7 @@ typedef struct {
     struct t_hook *fd_hook;
     struct t_hook *connect_hook;
     struct t_hook *print_hook;
+    struct t_hook *buffer_closing_hook;
     struct t_hook *command_hook;
     struct {
         struct t_config_file *file;
@@ -483,6 +484,17 @@ cleanup:
 }
 
 gint
+_wec_buffer_closing_callback(gconstpointer user_data, gpointer data, const gchar *signal, const gchar *type_data, gpointer signal_data)
+{
+    WecContext *context = (WecContext *) user_data;
+
+    if ( context->buffer == signal_data )
+        context->buffer = NULL;
+
+    return WEECHAT_RC_OK;
+}
+
+gint
 _wec_command(gconstpointer user_data, gpointer data, struct t_gui_buffer *buffer, gint argc, gchar **argv, gchar **argv_eol)
 {
     WecContext *context = (WecContext *) user_data;
@@ -604,6 +616,7 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
     _wec_connect(context);
 
     context->print_hook = weechat_hook_print(NULL, NULL, NULL, 1, _wec_print_callback, context, NULL);
+    context->buffer_closing_hook = weechat_hook_signal("buffer_closing", _wec_buffer_closing_callback, context, NULL);
     context->command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect | debug", "", "connect || disconnect || debug", _wec_command, context, NULL);
 
     return WEECHAT_RC_OK;
