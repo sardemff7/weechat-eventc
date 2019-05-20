@@ -509,6 +509,24 @@ _wec_command(gconstpointer user_data, gpointer data, struct t_gui_buffer *buffer
     }
     else if ( g_strcmp0(argv[1], "disconnect") == 0 )
         _wec_disconnect(context);
+    else if ( g_strcmp0(argv[1], "status") == 0 )
+    {
+        const gchar *prefix = weechat_prefix("action");
+        const gchar *status = "Disconnected";
+        const gchar *extra_status = "";
+        gint error = 0;
+        if ( context->connect_hook != NULL )
+            status = "Connection failed, trying to reconnect";
+        else if ( eventc_light_connection_is_connected(context->client, &error) )
+            status = "Connected";
+        else if ( error != 0 )
+        {
+            status = "Error: ";
+            extra_status = g_strerror(error);
+        }
+        /* We prevent some spam if we have a debug buffer */
+        weechat_printf(context->buffer, "%s"PACKAGE_NAME ": %s%s", prefix, status, extra_status);
+    }
     else if ( g_strcmp0(argv[1], "debug") == 0 )
     {
         if ( context->buffer == NULL )
@@ -617,7 +635,7 @@ weechat_plugin_init(struct t_weechat_plugin *plugin, gint argc, gchar *argv[])
 
     context->print_hook = weechat_hook_print(NULL, NULL, NULL, 1, _wec_print_callback, context, NULL);
     context->buffer_closing_hook = weechat_hook_signal("buffer_closing", _wec_buffer_closing_callback, context, NULL);
-    context->command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect | debug", "", "connect || disconnect || debug", _wec_command, context, NULL);
+    context->command_hook = weechat_hook_command("eventc", "Control eventc", "connect | disconnect | status | debug", "", "connect || disconnect || status || debug", _wec_command, context, NULL);
 
     return WEECHAT_RC_OK;
 }
